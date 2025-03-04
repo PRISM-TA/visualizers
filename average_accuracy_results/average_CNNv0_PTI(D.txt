@@ -1,0 +1,86 @@
+
+==================================================
+Average Accuracy Analysis
+Model: CNNv0
+Feature Set: processed technical indicators (20 days)
+==================================================
+
+Number of stocks analyzed: 28
+Stocks: AAPL, AXP, BA, CAT, CSCO, CVX, DD, DIS, GE, HD, IBM, INTC, JNJ, JPM, KO, MCD, MMM, MRK, MSFT, NKE, PFE, PG, TRV, UNH, UTX, VZ, WMT, XOM
+
+Total Predictions Across All Stocks: 90692
+Overall Average Accuracy: 0.8133
+
+Actual Label Distribution:
+Label 0: 39404 (43.45%)
+Label 1: 4904 (5.41%)
+Label 2: 46384 (51.14%)
+
+Predicted Label Distribution:
+Label 0: 40565 (44.73%)
+Label 1: 4531 (5.00%)
+Label 2: 45596 (50.28%)
+
+Overall Metrics:
+Macro Recall: 0.6359
+Macro Precision: 0.6381
+Macro F1: 0.6368
+
+Downtrend:
+  Recall: 0.8713
+  Precision: 0.8463
+  F1: 0.8586
+
+Sideways:
+  Recall: 0.2086
+  Precision: 0.2258
+  F1: 0.2169
+
+Uptrend:
+  Recall: 0.8279
+  Precision: 0.8422
+  F1: 0.8350
+
+Overall Confusion Matrix:
+                Pred_Downtrend  Pred_Sideways  Pred_Uptrend
+True_Downtrend           34331            951          4122
+True_Sideways              809           1023          3072
+True_Uptrend              5425           2557         38402
+
+Per-Stock Metrics:
+ticker  predictions  accuracy  recall  precision     f1
+   IBM         3239    0.8472  0.6402     0.6568 0.6456
+    DD         3239    0.8444  0.6610     0.6598 0.6604
+   CVX         3239    0.8382  0.6668     0.6714 0.6686
+  MSFT         3239    0.8379  0.6380     0.6464 0.6411
+   NKE         3239    0.8376  0.6297     0.6293 0.6294
+   JNJ         3239    0.8376  0.6600     0.6958 0.6727
+   JPM         3239    0.8320  0.6681     0.6792 0.6723
+   DIS         3239    0.8262  0.6196     0.6166 0.6177
+   XOM         3239    0.8256  0.6608     0.6606 0.6607
+   AXP         3239    0.8256  0.6276     0.6383 0.6307
+    KO         3239    0.8215  0.6465     0.6434 0.6448
+    PG         3239    0.8194  0.6415     0.6419 0.6417
+  INTC         3239    0.8169  0.6289     0.6340 0.6308
+    VZ         3239    0.8169  0.6082     0.6082 0.6080
+   TRV         3239    0.8163  0.6441     0.6627 0.6514
+    BA         3239    0.8148  0.6485     0.6493 0.6487
+    GE         3239    0.8141  0.6274     0.6244 0.6255
+  AAPL         3239    0.8141  0.6592     0.6684 0.6633
+    HD         3239    0.8123  0.6055     0.6074 0.6053
+  CSCO         3239    0.8070  0.6617     0.6620 0.6616
+   PFE         3239    0.8067  0.6576     0.6615 0.6593
+   CAT         3239    0.8052  0.6881     0.6810 0.6842
+   WMT         3239    0.8021  0.6239     0.6207 0.6219
+   MMM         3239    0.7984  0.6199     0.6220 0.6205
+   UNH         3239    0.7928  0.6447     0.6354 0.6392
+   MRK         3239    0.7910  0.6245     0.6167 0.6197
+   UTX         3239    0.7564  0.5581     0.5540 0.5551
+   MCD         3239    0.7129  0.5191     0.5158 0.5173
+
+Accuracy Statistics:
+Mean Accuracy: 0.8133
+Median Accuracy: 0.8166
+Min Accuracy: 0.7129 (MCD)
+Max Accuracy: 0.8472 (IBM)
+Standard Deviation: 0.0274

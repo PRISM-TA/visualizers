@@ -1,0 +1,74 @@
+
+==================================================
+Average Accuracy Analysis
+Model: MLPv0
+Feature Set: processed technical indicators
+==================================================
+
+Number of stocks analyzed: 16
+Stocks: CVX, CAT, AAPL, MMM, MSFT, HD, DD, BA, KO, INTC, AXP, CSCO, JPM, GE, JNJ, DIS
+
+Total Predictions Across All Stocks: 75840
+Overall Average Accuracy: 0.4542
+
+Actual Label Distribution:
+Label 0: 32087 (42.31%)
+Label 1: 4301 (5.67%)
+Label 2: 39452 (52.02%)
+
+Predicted Label Distribution:
+Label 0: 31339 (41.32%)
+Label 1: 6365 (8.39%)
+Label 2: 38136 (50.28%)
+
+Overall Metrics:
+Macro Recall: 0.3704
+Macro Precision: 0.3603
+Macro F1: 0.3634
+
+Downtrend:
+  Recall: 0.4227
+  Precision: 0.4328
+  F1: 0.4277
+
+Sideways:
+  Recall: 0.1786
+  Precision: 0.1207
+  F1: 0.1440
+
+Uptrend:
+  Recall: 0.5099
+  Precision: 0.5275
+  F1: 0.5186
+
+Overall Confusion Matrix:
+                Pred_Downtrend  Pred_Sideways  Pred_Uptrend
+True_Downtrend           13564           2452         16071
+True_Sideways             1585            768          1948
+True_Uptrend             16190           3145         20117
+
+Per-Stock Metrics:
+ticker  predictions  accuracy  recall  precision     f1
+   JPM         4740    0.4998  0.4015     0.3940 0.3956
+  MSFT         4740    0.4932  0.4229     0.4002 0.4054
+   DIS         4740    0.4823  0.3739     0.3711 0.3719
+   AXP         4740    0.4791  0.3846     0.3759 0.3783
+    HD         4740    0.4768  0.3893     0.3794 0.3816
+   CVX         4740    0.4726  0.3606     0.3570 0.3579
+    GE         4740    0.4527  0.3755     0.3628 0.3646
+    BA         4740    0.4483  0.3550     0.3441 0.3466
+    DD         4740    0.4479  0.3683     0.3591 0.3618
+   JNJ         4740    0.4447  0.3537     0.3455 0.3483
+  CSCO         4740    0.4443  0.3839     0.3700 0.3735
+    KO         4740    0.4420  0.3591     0.3512 0.3534
+   MMM         4740    0.4382  0.3591     0.3475 0.3510
+  AAPL         4740    0.4348  0.3364     0.3310 0.3321
+  INTC         4740    0.4084  0.3463     0.3328 0.3347
+   CAT         4740    0.4025  0.3360     0.3293 0.3310
+
+Accuracy Statistics:
+Mean Accuracy: 0.4542
+Median Accuracy: 0.4481
+Min Accuracy: 0.4025 (CAT)
+Max Accuracy: 0.4998 (JPM)
+Standard Deviation: 0.0279

@@ -1,0 +1,68 @@
+
+==================================================
+Average Accuracy Analysis
+Model: LSTMv0
+Feature Set: processed technical indicators (20 days)
+==================================================
+
+Number of stocks analyzed: 10
+Stocks: AAPL, AXP, BA, CAT, CSCO, CVX, DD, DIS, GE, HD
+
+Total Predictions Across All Stocks: 32390
+Overall Average Accuracy: 0.7287
+
+Actual Label Distribution:
+Label 0: 13994 (43.20%)
+Label 1: 1782 (5.50%)
+Label 2: 16614 (51.29%)
+
+Predicted Label Distribution:
+Label 0: 13961 (43.10%)
+Label 1: 3450 (10.65%)
+Label 2: 14979 (46.25%)
+
+Overall Metrics:
+Macro Recall: 0.5879
+Macro Precision: 0.5756
+Macro F1: 0.5748
+
+Downtrend:
+  Recall: 0.7938
+  Precision: 0.7957
+  F1: 0.7948
+
+Sideways:
+  Recall: 0.2441
+  Precision: 0.1261
+  F1: 0.1663
+
+Uptrend:
+  Recall: 0.7257
+  Precision: 0.8049
+  F1: 0.7633
+
+Overall Confusion Matrix:
+                Pred_Downtrend  Pred_Sideways  Pred_Uptrend
+True_Downtrend           11109            927          1958
+True_Sideways              383            435           964
+True_Uptrend              2469           2088         12057
+
+Per-Stock Metrics:
+ticker  predictions  accuracy  recall  precision     f1
+    DD         3239    0.7864  0.6464     0.6171 0.6216
+    BA         3239    0.7357  0.6224     0.5881 0.5923
+   CVX         3239    0.7345  0.5769     0.5686 0.5655
+    GE         3239    0.7326  0.5925     0.5779 0.5783
+    HD         3239    0.7311  0.5686     0.5732 0.5664
+   DIS         3239    0.7169  0.5264     0.5352 0.5267
+  AAPL         3239    0.7166  0.5988     0.5797 0.5822
+  CSCO         3239    0.7163  0.5699     0.5656 0.5646
+   AXP         3239    0.7153  0.5816     0.5677 0.5687
+   CAT         3239    0.7011  0.5900     0.5801 0.5734
+
+Accuracy Statistics:
+Mean Accuracy: 0.7287
+Median Accuracy: 0.7240
+Min Accuracy: 0.7011 (CAT)
+Max Accuracy: 0.7864 (DD)
+Standard Deviation: 0.0231
