@@ -3,6 +3,9 @@ import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
+import base64
+from io import BytesIO
+from datetime import datetime
 import sys
 import os
 
@@ -147,6 +150,49 @@ def merge_data(market_data: pd.DataFrame, prediction_data: pd.DataFrame) -> pd.D
     
     return merged_df
 
+def export_plotly_to_png(fig, filename=None):
+    """
+    Export a Plotly figure as PNG image and offer download
+    """
+    if filename is None:
+        # Generate default filename with timestamp
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        filename = f"chart_export_{timestamp}.png"
+    
+    # Create a deep copy of the figure to avoid modifying the original
+    export_fig = go.Figure(fig)
+    
+    # Adjust layout for better spacing in exported PNG
+    export_fig.update_layout(
+        paper_bgcolor='white',
+        plot_bgcolor='white',
+        margin=dict(t=125, b=80),  # Increase top margin to prevent title overlap
+        title=dict(
+            y=0.95,  # Move title position up
+            x=0.5,
+            xanchor='center',
+            yanchor='top'
+        )
+    )
+    
+    # Create a BytesIO object to store the image
+    img_bytes = BytesIO()
+    
+    # Write the figure to the BytesIO object as PNG
+    export_fig.write_image(img_bytes, format='png', engine='kaleido', width=1200, height=900)
+    
+    # Reset the pointer to the start of the BytesIO object
+    img_bytes.seek(0)
+    
+    # Encode the bytes as base64 for download
+    b64_png = base64.b64encode(img_bytes.read()).decode()
+    
+    # Create the HTML download link
+    href = f'<a download="{filename}" href="data:image/png;base64,{b64_png}">Download Plot as PNG</a>'
+    
+    return href
+
+
 def plot_model_behavior(combined_data: pd.DataFrame, ticker: str, model: str, feature_set: str, 
                        start_idx: int, window_size: int = 100) -> go.Figure:
     """Create a plot showing price and model behavior."""
@@ -166,7 +212,7 @@ def plot_model_behavior(combined_data: pd.DataFrame, ticker: str, model: str, fe
     fig = make_subplots(
         rows=3, cols=1,
         row_heights=[0.5, 0.2, 0.3],
-        vertical_spacing=0.05,
+        vertical_spacing=0.08,
         shared_xaxes=True,
         subplot_titles=(
             "Price Chart with Predicted Labels", 
@@ -279,11 +325,12 @@ def plot_model_behavior(combined_data: pd.DataFrame, ticker: str, model: str, fe
         height=900,
         showlegend=True,
         xaxis_rangeslider_visible=False,
+        margin=dict(t=150, l=80, r=80, b=90),
         legend=dict(
-            orientation="h",
+            orientation="h",  # Make legend horizontal
             yanchor="bottom",
-            y=1.02,
-            xanchor="center", 
+            y=1.03,          # Position legend above the plot
+            xanchor="center",
             x=0.5
         )
     )
@@ -484,20 +531,21 @@ def main():
                 if st.button("Next ➡️") and st.session_state.current_idx + window_size < len(combined_data):
                     st.session_state.current_idx += window_size
             
-            # Display data statistics
-            col1, col2, col3 = st.columns(3)
-            with col1:
-                st.metric("Total Market Data Points", len(market_data))
-            with col2:
-                st.metric("Total Prediction Points", len(prediction_data))
-            with col3:
-                st.metric("Combined Data Points", len(combined_data))
+            # # Display data statistics
+            # col1, col2, col3 = st.columns(3)
+            # with col1:
+            #     st.metric("Total Market Data Points", len(market_data))
+            # with col2:
+            #     st.metric("Total Prediction Points", len(prediction_data))
+            # with col3:
+            #     st.metric("Combined Data Points", len(combined_data))
             
             # Create and display plot
             fig = plot_model_behavior(
                 combined_data, ticker, model, feature_set, 
                 st.session_state.current_idx, window_size
             )
+            st.session_state.current_fig = fig  # Store in session state for export
             st.plotly_chart(fig, use_container_width=True)
             
             # Display metrics
@@ -512,6 +560,12 @@ def main():
                 file_name=f"{ticker}_{model}_{feature_set}_data.csv",
                 mime="text/csv",
             )
+            
+            # Add export to PNG button
+            if st.session_state.current_fig is not None:
+                export_filename = f"{ticker}_{model}_{feature_set}_chart.png"
+                export_link = export_plotly_to_png(st.session_state.current_fig, export_filename)
+                st.markdown(export_link, unsafe_allow_html=True)
 
     except Exception as e:
         st.error(f"Error: {str(e)}")
