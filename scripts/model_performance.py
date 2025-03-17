@@ -215,7 +215,7 @@ def plot_model_behavior(combined_data: pd.DataFrame, ticker: str, model: str, fe
         vertical_spacing=0.08,
         shared_xaxes=True,
         subplot_titles=(
-            "Price Chart with Predicted Labels", 
+            "Price Chart with Predicted Labels (Labels stands for the trend of the next 20 days)", 
             "Volume", 
             "Class Probabilities"
         )
