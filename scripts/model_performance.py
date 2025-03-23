@@ -263,12 +263,21 @@ def plot_model_behavior(combined_data: pd.DataFrame, ticker: str, model: str, fe
         row=2, col=1
     )
     
-    # Add predicted labels overlay on price chart
+    # For each row, determine if prob_down, prob_side, or prob_up is highest
+    # This ensures labels match the probability chart
+    window_df['max_prob'] = window_df[['prob_down', 'prob_side', 'prob_up']].idxmax(axis=1)
+    window_df['label_by_prob'] = window_df['max_prob'].map({
+        'prob_down': 0,  # Down
+        'prob_side': 1,  # Side
+        'prob_up': 2     # Up
+    })
+    
+    # Add markers based on the highest probability (to ensure consistency)
     label_colors = {0: 'red', 1: 'gray', 2: 'green'}
     label_names = {0: 'Down', 1: 'Side', 2: 'Up'}
     
     for label in [0, 1, 2]:
-        label_data = window_df[window_df['predicted_label'] == label]
+        label_data = window_df[window_df['label_by_prob'] == label]
         if not label_data.empty:
             fig.add_trace(
                 go.Scatter(
@@ -316,6 +325,17 @@ def plot_model_behavior(combined_data: pd.DataFrame, ticker: str, model: str, fe
             name='Up Probability',
             line=dict(color='green', width=1)
         ),
+        row=3, col=1
+    )
+    
+    # Add a reference line at 0.5 for probabilities
+    fig.add_shape(
+        type="line",
+        line=dict(dash="dash", width=1, color="black"),
+        x0=window_df['date'].min(),
+        x1=window_df['date'].max(),
+        y0=0.5,
+        y1=0.5,
         row=3, col=1
     )
     
