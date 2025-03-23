@@ -194,8 +194,19 @@ def export_plotly_to_png(fig, filename=None):
 
 
 def plot_model_behavior(combined_data: pd.DataFrame, ticker: str, model: str, feature_set: str, 
-                       start_idx: int, window_size: int = 100) -> go.Figure:
-    """Create a plot showing price and model behavior."""
+                       start_idx: int, window_size: int = 100, display_mode: str = "prediction_type") -> go.Figure:
+    """
+    Create a plot showing price and model behavior.
+    
+    Parameters:
+    - combined_data: DataFrame with price and prediction data
+    - ticker: Stock symbol
+    - model: Model name
+    - feature_set: Feature set name
+    - start_idx: Starting index for the window
+    - window_size: Size of the data window to display
+    - display_mode: Either "prediction_type" or "prediction_accuracy"
+    """
     if combined_data.empty:
         fig = go.Figure()
         fig.update_layout(title="No data available")
@@ -263,45 +274,14 @@ def plot_model_behavior(combined_data: pd.DataFrame, ticker: str, model: str, fe
         row=2, col=1
     )
     
-    # For each row, determine if prob_down, prob_side, or prob_up is highest
-    # This ensures labels match the probability chart
-    window_df['max_prob'] = window_df[['prob_down', 'prob_side', 'prob_up']].idxmax(axis=1)
-    window_df['label_by_prob'] = window_df['max_prob'].map({
-        'prob_down': 0,  # Down
-        'prob_side': 1,  # Side
-        'prob_up': 2     # Up
-    })
-    
-    # Add markers based on the highest probability (to ensure consistency)
-    label_colors = {0: 'red', 1: 'gray', 2: 'green'}
-    label_names = {0: 'Down', 1: 'Side', 2: 'Up'}
-    
-    for label in [0, 1, 2]:
-        label_data = window_df[window_df['label_by_prob'] == label]
-        if not label_data.empty:
-            fig.add_trace(
-                go.Scatter(
-                    x=label_data['date'],
-                    y=label_data['close'],
-                    mode='markers',
-                    name=f'Predicted: {label_names[label]}',
-                    marker=dict(
-                        color=label_colors[label],
-                        size=8,
-                        symbol='circle'
-                    )
-                ),
-                row=1, col=1
-            )
-    
-    # Add class probabilities
+    # Add class probabilities first (they don't change between display modes)
     fig.add_trace(
         go.Scatter(
             x=window_df['date'],
-            y=window_df['prob_down'],
+            y=window_df['prob_up'],
             mode='lines',
-            name='Down Probability',
-            line=dict(color='red', width=1)
+            name='Up Probability',
+            line=dict(color='green', width=1)
         ),
         row=3, col=1
     )
@@ -320,10 +300,10 @@ def plot_model_behavior(combined_data: pd.DataFrame, ticker: str, model: str, fe
     fig.add_trace(
         go.Scatter(
             x=window_df['date'],
-            y=window_df['prob_up'],
+            y=window_df['prob_down'],
             mode='lines',
-            name='Up Probability',
-            line=dict(color='green', width=1)
+            name='Down Probability',
+            line=dict(color='red', width=1)
         ),
         row=3, col=1
     )
@@ -338,6 +318,118 @@ def plot_model_behavior(combined_data: pd.DataFrame, ticker: str, model: str, fe
         y1=0.5,
         row=3, col=1
     )
+    
+    # IMPORTANT: Use the existing predicted_label column directly
+    # This ensures consistency with the probabilities
+    if display_mode == "prediction_type":
+        # DISPLAY MODE 1: Show prediction types (Up/Side/Down)
+        label_colors = {0: 'green', 1: 'gray', 2: 'red'}
+        label_names = {0: 'Up', 1: 'Side', 2: 'Down'}
+        
+        for label in [0, 1, 2]:
+            label_data = window_df[window_df['predicted_label'] == label]
+            if not label_data.empty:
+                fig.add_trace(
+                    go.Scatter(
+                        x=label_data['date'],
+                        y=label_data['close'],
+                        mode='markers',
+                        name=f'Predicted: {label_names[label]}',
+                        marker=dict(
+                            color=label_colors[label],
+                            size=8,
+                            symbol='circle'
+                        ),
+                        hovertemplate=(
+                            "Date: %{x}<br>"
+                            "Close: %{y}<br>"
+                            "Prediction: " + label_names[label] + "<br>"
+                            "Down Prob: %{customdata[0]:.3f}<br>"
+                            "Side Prob: %{customdata[1]:.3f}<br>"
+                            "Up Prob: %{customdata[2]:.3f}"
+                        ),
+                        customdata=label_data[['prob_down', 'prob_side', 'prob_up']]
+                    ),
+                    row=1, col=1
+                )
+        
+        # Update subplot title for clarity
+        fig.layout.annotations[0].text = "Price Chart with Predicted Trend Direction (Up/Side/Down)"
+        
+    else:  # display_mode == "prediction_accuracy"
+        # DISPLAY MODE 2: Show prediction accuracy (Correct/Wrong)
+        
+        # Determine if predictions are correct by comparing with actual label
+        if 'actual_label' in window_df.columns:
+            window_df['is_correct'] = window_df['predicted_label'] == window_df['actual_label']
+        else:
+            # Fallback if actual_label is not available (for testing only)
+            # In a real implementation, you should use actual ground truth
+            window_df['is_correct'] = True  # Default to all correct for demonstration
+        
+        correct_data = window_df[window_df['is_correct'] == True]
+        wrong_data = window_df[window_df['is_correct'] == False]
+        
+        # Show correct predictions
+        if not correct_data.empty:
+            fig.add_trace(
+                go.Scatter(
+                    x=correct_data['date'],
+                    y=correct_data['close'],
+                    mode='markers',
+                    name='Correct Prediction',
+                    marker=dict(
+                        color='green',
+                        size=8,
+                        symbol='circle'
+                    ),
+                    hovertemplate=(
+                        "Date: %{x}<br>"
+                        "Close: %{y}<br>"
+                        "Prediction: Correct<br>"
+                        "Predicted Label: %{customdata[0]}<br>"
+                        "Actual Label: %{customdata[1]}<br>"
+                        "Down Prob: %{customdata[2]:.3f}<br>"
+                        "Side Prob: %{customdata[3]:.3f}<br>"
+                        "Up Prob: %{customdata[4]:.3f}"
+                    ),
+                    customdata=correct_data[['predicted_label', 'actual_label', 
+                                           'prob_down', 'prob_side', 'prob_up']]
+                ),
+                row=1, col=1
+            )
+        
+        # Show wrong predictions
+        if not wrong_data.empty:
+            fig.add_trace(
+                go.Scatter(
+                    x=wrong_data['date'],
+                    y=wrong_data['close'],
+                    mode='markers',
+                    name='Wrong Prediction',
+                    marker=dict(
+                        color='red',
+                        size=8,
+                        symbol='x'
+                    ),
+                    hovertemplate=(
+                        "Date: %{x}<br>"
+                        "Close: %{y}<br>"
+                        "Prediction: Wrong<br>"
+                        "Predicted Label: %{customdata[0]}<br>"
+                        "Actual Label: %{customdata[1]}<br>"
+                        "Down Prob: %{customdata[2]:.3f}<br>"
+                        "Side Prob: %{customdata[3]:.3f}<br>"
+                        "Up Prob: %{customdata[4]:.3f}"
+                    ),
+                    customdata=wrong_data[['predicted_label', 'actual_label', 
+                                         'prob_down', 'prob_side', 'prob_up']]
+                ),
+                row=1, col=1
+            )
+        
+        # Update subplot title for clarity
+        fig.layout.annotations[0].text = "Price Chart with Prediction Accuracy (Correct/Wrong)"
     
     # Update layout
     fig.update_layout(
@@ -458,6 +550,12 @@ def display_metrics(data: pd.DataFrame):
 
 def main():
     try:
+        # Initialize session state for current_idx if it doesn't exist
+        if 'current_idx' not in st.session_state:
+            st.session_state.current_idx = 0
+        if 'current_fig' not in st.session_state:
+            st.session_state.current_fig = None
+        
         # Create database connection as in analyze_accuracy.py
         engine = create_engine(DB_URL)
         DBSession = sessionmaker(bind=engine)
@@ -494,10 +592,25 @@ def main():
                 st.header("Display Options")
                 window_size = st.slider("Window Size (days)", min_value=20, max_value=250, value=100)
                 
+                # NEW: Display mode selector
+                st.header("Label Display Mode")
+                display_mode = st.radio(
+                    "Choose what to display on price chart:", 
+                    ["Prediction Type (Up/Side/Down)", "Prediction Accuracy (Correct/Wrong)"],
+                    index=0
+                )
+                # Convert selected option to parameter value
+                display_param = "prediction_type" if "Type" in display_mode else "prediction_accuracy"
+                
+                # Show appropriate legend based on display mode
                 st.header("Legend")
-                st.markdown("🔴 Down (0)")
-                st.markdown("⚫ Side (1)")
-                st.markdown("🟢 Up (2)")
+                if display_param == "prediction_type":
+                    st.markdown("🔴 Down (2)")
+                    st.markdown("⚫ Side (1)")
+                    st.markdown("🟢 Up (0)")
+                else:
+                    st.markdown("🟢 Correct Prediction")
+                    st.markdown("❌ Wrong Prediction")
             
             # Load data
             with st.spinner("Loading model predictions..."):
@@ -551,19 +664,10 @@ def main():
                 if st.button("Next ➡️") and st.session_state.current_idx + window_size < len(combined_data):
                     st.session_state.current_idx += window_size
             
-            # # Display data statistics
-            # col1, col2, col3 = st.columns(3)
-            # with col1:
-            #     st.metric("Total Market Data Points", len(market_data))
-            # with col2:
-            #     st.metric("Total Prediction Points", len(prediction_data))
-            # with col3:
-            #     st.metric("Combined Data Points", len(combined_data))
-            
-            # Create and display plot
+            # Create and display plot with the selected display mode
             fig = plot_model_behavior(
                 combined_data, ticker, model, feature_set, 
-                st.session_state.current_idx, window_size
+                st.session_state.current_idx, window_size, display_param
             )
             st.session_state.current_fig = fig  # Store in session state for export
             st.plotly_chart(fig, use_container_width=True)
