@@ -8,6 +8,7 @@ from io import BytesIO
 from datetime import datetime
 import sys
 import os
+import math
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -212,12 +213,19 @@ def plot_model_behavior(combined_data: pd.DataFrame, ticker: str, model: str, fe
         fig.update_layout(title="No data available")
         return fig
     
-    # Get the window of data to display
+     # Get the window of data to display
     if start_idx >= len(combined_data):
         start_idx = 0
     
     end_idx = min(start_idx + window_size, len(combined_data))
     window_df = combined_data.iloc[start_idx:end_idx].copy()
+    
+    # Get date range for title
+    date_range = "N/A"
+    if not window_df.empty:
+        start_date = window_df['date'].iloc[0].strftime('%Y-%m-%d')
+        end_date = window_df['date'].iloc[-1].strftime('%Y-%m-%d')
+        date_range = f"{start_date} to {end_date}"
     
     # Create figure with subplots
     fig = make_subplots(
@@ -460,6 +468,11 @@ def plot_model_behavior(combined_data: pd.DataFrame, ticker: str, model: str, fe
         row=1, col=1
     )
     
+    # Add date range to title
+    fig.update_layout(
+        title=f"{ticker} - {model} ({feature_set}) - {date_range}",
+    )
+    
     return fig
 
 def display_metrics(data: pd.DataFrame):
@@ -641,35 +654,29 @@ def main():
             
             # Navigation controls
             col1, col2, col3, col4 = st.columns([1, 1, 2, 1])
-            
+
             with col1:
                 if st.button("⏮️ Start"):
                     st.session_state.current_idx = 0
-            
+
             with col2:
                 if st.button("⬅️ Previous") and st.session_state.current_idx >= window_size:
                     st.session_state.current_idx -= window_size
-            
+
             with col3:
-                date_range = ""
-                if not combined_data.empty and len(combined_data) > st.session_state.current_idx:
-                    start_date = combined_data.iloc[st.session_state.current_idx]['date'].strftime('%Y-%m-%d')
-                    end_idx = min(st.session_state.current_idx + window_size, len(combined_data)) - 1
-                    end_date = combined_data.iloc[end_idx]['date'].strftime('%Y-%m-%d')
-                    date_range = f"{start_date} to {end_date}"
-                
-                st.write(f"Showing days {st.session_state.current_idx} to {st.session_state.current_idx + window_size} ({date_range})")
-            
+                st.write(f"Window {st.session_state.current_idx // window_size + 1} of {math.ceil(len(combined_data) / window_size)}")
+
             with col4:
                 if st.button("Next ➡️") and st.session_state.current_idx + window_size < len(combined_data):
                     st.session_state.current_idx += window_size
-            
-            # Create and display plot with the selected display mode
+
+            # Create and display plot 
             fig = plot_model_behavior(
                 combined_data, ticker, model, feature_set, 
                 st.session_state.current_idx, window_size, display_param
             )
             st.session_state.current_fig = fig  # Store in session state for export
+
             st.plotly_chart(fig, use_container_width=True)
             
             # Display metrics
