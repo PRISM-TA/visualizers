@@ -195,7 +195,7 @@ def export_plotly_to_png(fig, filename=None):
 
 
 def plot_model_behavior(combined_data: pd.DataFrame, ticker: str, model: str, feature_set: str, 
-                       start_idx: int, window_size: int = 100, display_mode: str = "prediction_type") -> go.Figure:
+                     start_idx: int, window_size: int = 100, display_mode: str = "prediction_type") -> go.Figure:
     """
     Create a plot showing price and model behavior.
     
@@ -206,7 +206,7 @@ def plot_model_behavior(combined_data: pd.DataFrame, ticker: str, model: str, fe
     - feature_set: Feature set name
     - start_idx: Starting index for the window
     - window_size: Size of the data window to display
-    - display_mode: Either "prediction_type" or "prediction_accuracy"
+    - display_mode: Either "prediction_type", "prediction_accuracy", or "actual_labels_only"
     """
     if combined_data.empty:
         fig = go.Figure()
@@ -327,8 +327,6 @@ def plot_model_behavior(combined_data: pd.DataFrame, ticker: str, model: str, fe
         row=3, col=1
     )
     
-    # IMPORTANT: Use the existing predicted_label column directly
-    # This ensures consistency with the probabilities
     if display_mode == "prediction_type":
         # DISPLAY MODE 1: Show prediction types (Up/Side/Down)
         label_colors = {0: 'green', 1: 'gray', 2: 'red'}
@@ -364,7 +362,7 @@ def plot_model_behavior(combined_data: pd.DataFrame, ticker: str, model: str, fe
         # Update subplot title for clarity
         fig.layout.annotations[0].text = "Price Chart with Predicted Trend Direction (Up/Side/Down)"
         
-    else:  # display_mode == "prediction_accuracy"
+    elif display_mode == "prediction_accuracy":
         # DISPLAY MODE 2: Show prediction accuracy (Correct/Wrong)
         
         # Determine if predictions are correct by comparing with actual label
@@ -438,6 +436,49 @@ def plot_model_behavior(combined_data: pd.DataFrame, ticker: str, model: str, fe
         
         # Update subplot title for clarity
         fig.layout.annotations[0].text = "Price Chart with Prediction Accuracy (Correct/Wrong)"
+    
+    elif display_mode == "actual_labels_only":
+        # DISPLAY MODE 3: Show only actual labels
+        label_colors = {0: 'green', 1: 'gray', 2: 'red'}
+        label_names = {0: 'Up', 1: 'Side', 2: 'Down'}
+        
+        if 'actual_label' in window_df.columns:
+            for label in [0, 1, 2]:
+                label_data = window_df[window_df['actual_label'] == label]
+                if not label_data.empty:
+                    fig.add_trace(
+                        go.Scatter(
+                            x=label_data['date'],
+                            y=label_data['close'],
+                            mode='markers',
+                            name=f'Actual: {label_names[label]}',
+                            marker=dict(
+                                color=label_colors[label],
+                                size=10,
+                                symbol='diamond',  # Different symbol to distinguish from predictions
+                                line=dict(width=1, color='black')  # Add border for visibility
+                            ),
+                            hovertemplate=(
+                                "Date: %{x}<br>"
+                                "Close: %{y}<br>"
+                                "Actual Label: " + label_names[label] + "<br>"
+                            )
+                        ),
+                        row=1, col=1
+                    )
+            
+            # Update subplot title for clarity
+            fig.layout.annotations[0].text = "Price Chart with Actual Trend Direction (Ground Truth)"
+        else:
+            # Show a message if actual labels are not available
+            fig.add_annotation(
+                text="Actual labels not available in dataset",
+                xref="paper", yref="paper",
+                x=0.5, y=0.5,
+                showarrow=False,
+                font=dict(size=18, color="red")
+            )
+            fig.layout.annotations[0].text = "Price Chart (Actual Labels Not Available)"
     
     # Update layout
     fig.update_layout(
@@ -609,11 +650,16 @@ def main():
                 st.header("Label Display Mode")
                 display_mode = st.radio(
                     "Choose what to display on price chart:", 
-                    ["Prediction Type (Up/Side/Down)", "Prediction Accuracy (Correct/Wrong)"],
+                    ["Prediction Type (Up/Side/Down)", "Prediction Accuracy (Correct/Wrong)", "actual_labels_only"],
                     index=0
                 )
                 # Convert selected option to parameter value
-                display_param = "prediction_type" if "Type" in display_mode else "prediction_accuracy"
+                if "Type" in display_mode:
+                    display_param = "prediction_type"
+                elif "Accuracy" in display_mode:
+                    display_param = "prediction_accuracy"
+                elif "actual_labels_only" in display_mode:
+                    display_param = "actual_labels_only"
                 
                 # Show appropriate legend based on display mode
                 st.header("Legend")
