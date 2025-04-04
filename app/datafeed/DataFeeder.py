@@ -23,8 +23,7 @@ class DataFeeder:
                     ClassifierResult.uptrend_prob.label('uptrend_prob'),
                     ClassifierResult.side_prob.label('side_prob'),
                     ClassifierResult.downtrend_prob.label('downtrend_prob'),
-                    ClassifierResult.predicted_label.label('predicted_label'),
-                    ClassifierResult.actual_label.label('actual_label')
+                    ClassifierResult.predicted_label.label('predicted_label')
                 )
                 .where(
                     (ClassifierResult.ticker == ticker) &
@@ -44,7 +43,7 @@ class DataFeeder:
                     classifier_subq.c.uptrend_prob,
                     classifier_subq.c.side_prob,
                     classifier_subq.c.downtrend_prob,
-                    classifier_subq.c.predicted_label.label("predicted_label"),
+                    classifier_subq.c.predicted_label,
                     MarketData.open,
                     MarketData.close,
                     EquityIndicators.rsi_1,
