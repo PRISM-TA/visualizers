@@ -202,6 +202,90 @@ def calculate_actual_label_returns(prediction_data: pd.DataFrame, window_size: i
     
     return results
 
+def plot_combined_returns_distribution(returns_results: Dict) -> go.Figure:
+    """Create a combined KDE plot of returns for all trend types using line curves."""
+    # Create figure
+    fig = go.Figure()
+    
+    # Define label names and colors
+    label_names = {0: "Uptrend", 1: "Sideways", 2: "Downtrend"}
+    colors = {0: "rgba(0, 128, 0, 0.8)", 1: "rgba(128, 128, 128, 0.8)", 2: "rgba(255, 0, 0, 0.8)"}
+    fill_colors = {0: "rgba(0, 128, 0, 0.1)", 1: "rgba(128, 128, 128, 0.1)", 2: "rgba(255, 0, 0, 0.1)"}
+    
+    # Add distribution for each label type
+    for label in sorted(returns_results.keys()):
+        if label in returns_results and returns_results[label]['count'] > 0:
+            # Get data for this label
+            returns_df = returns_results[label]['data']
+            count = returns_results[label]['count']
+            
+            # Create a kernel density estimate
+            hist, bin_edges = np.histogram(returns_df['return'], bins=50, density=True)
+            bin_centers = (bin_edges[:-1] + bin_edges[1:]) / 2
+            
+            # Add line chart for the distribution
+            fig.add_trace(go.Scatter(
+                x=bin_centers,
+                y=hist,
+                mode='lines',
+                name=f"{label_names[label]} (n={count})",
+                line=dict(color=colors[label], width=3, shape='spline', smoothing=1.3),
+                fill='tozeroy',
+                fillcolor=fill_colors[label]
+            ))
+            
+            # Add vertical line for the mean
+            mean_return = returns_df['return'].mean()
+            
+            # Position the annotations differently to avoid overlap
+            y_positions = {0: 0.9, 1: 0.8, 2: 0.7}
+            x_offsets = {0: 0.005, 1: 0, 2: -0.005}
+            
+            fig.add_vline(
+                x=mean_return,
+                line=dict(color=colors[label], width=2, dash='dash'),
+            )
+            
+            # Add annotation as a separate text element with background
+            fig.add_annotation(
+                x=mean_return + x_offsets[label],
+                y=y_positions[label],
+                text=f"{label_names[label]} Mean: {mean_return:.2%}",
+                showarrow=False,
+                font=dict(color=colors[label].replace('0.8', '1.0'), size=12),
+                align="left" if label == 0 else ("right" if label == 2 else "center"),
+                bgcolor="rgba(255, 255, 255, 0.8)",
+                bordercolor=colors[label],
+                borderwidth=1,
+                borderpad=4,
+                xref="x", 
+                yref="paper"
+            )
+    
+    # Add vertical line at zero
+    fig.add_vline(x=0, line_dash="solid", line_color="black", line_width=1)
+    
+    # Update layout
+    fig.update_layout(
+        title="Return Distribution by Trend Type",
+        xaxis_title="Return",
+        yaxis_title="Density",
+        legend_title="Trend Type",
+        xaxis_tickformat='.1%',
+        hovermode="x unified",
+        legend=dict(
+            yanchor="top",
+            y=0.99,
+            xanchor="left",
+            x=0.01,
+            bgcolor="rgba(255, 255, 255, 0.8)",
+            bordercolor="rgba(0, 0, 0, 0.3)",
+            borderwidth=1
+        )
+    )
+    
+    return fig
+
 def plot_returns_histogram(returns_data: pd.DataFrame, label: int, label_name: str) -> go.Figure:
     """Create a histogram of returns for a given actual label."""
     # Choose color based on label
@@ -448,8 +532,14 @@ def main():
                         "% Positive Returns": f"{stats['positive_pct']:.1f}%"
                     })
             
+            # Display summary table
             if summary_data:
                 st.table(pd.DataFrame(summary_data))
+                
+                # Add combined distribution chart
+                st.header("Combined Return Distribution")
+                combined_fig = plot_combined_returns_distribution(returns_results)
+                st.plotly_chart(combined_fig, use_container_width=True)
             
             # Detailed analysis by prediction type
             st.header("Detailed Analysis by Trend Type")
