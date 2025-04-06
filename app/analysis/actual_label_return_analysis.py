@@ -237,27 +237,32 @@ def plot_combined_returns_distribution(returns_results: Dict) -> go.Figure:
             # Add vertical line for the mean
             mean_return = returns_df['return'].mean()
             
-            # Position the annotations differently to avoid overlap
-            y_positions = {0: 0.9, 1: 0.8, 2: 0.7}
-            x_offsets = {0: 0.005, 1: 0, 2: -0.005}
-            
             fig.add_vline(
                 x=mean_return,
                 line=dict(color=colors[label], width=2, dash='dash'),
             )
             
+            # Position annotations with Uptrend highest, then Sideways, then Downtrend
+            y_positions = {0: 0.95, 1: 0.85, 2: 0.75}  # Different vertical positions
+            
             # Add annotation as a separate text element with background
             fig.add_annotation(
-                x=mean_return + x_offsets[label],
+                x=mean_return,
                 y=y_positions[label],
                 text=f"{label_names[label]} Mean: {mean_return:.2%}",
-                showarrow=False,
-                font=dict(color=colors[label].replace('0.8', '1.0'), size=12),
-                align="left" if label == 0 else ("right" if label == 2 else "center"),
-                bgcolor="rgba(255, 255, 255, 0.8)",
+                showarrow=True,
+                arrowhead=1,
+                arrowsize=1,
+                arrowwidth=1,
+                arrowcolor=colors[label],
+                ax=0,
+                ay=30,
+                font=dict(color="#000000", size=11),
+                align="center",
+                bgcolor="rgba(255, 255, 255, 0.9)",
                 bordercolor=colors[label],
                 borderwidth=1,
-                borderpad=4,
+                borderpad=3,
                 xref="x", 
                 yref="paper"
             )
@@ -273,6 +278,7 @@ def plot_combined_returns_distribution(returns_results: Dict) -> go.Figure:
         legend_title="Trend Type",
         xaxis_tickformat='.1%',
         hovermode="x unified",
+        margin=dict(t=120, r=50, b=50, l=50),  # Extra top margin for annotations
         legend=dict(
             yanchor="top",
             y=0.99,
