@@ -387,21 +387,9 @@ def main():
                 
                 ticker = st.selectbox("Select Ticker:", tickers)
                 
-                # Load available models for the selected ticker
-                models = get_available_models(session, ticker)
-                if not models:
-                    st.error(f"No models found for ticker {ticker}")
-                    return
-                
-                model = st.selectbox("Select Model:", models)
-                
-                # Load available feature sets for the selected ticker and model
-                feature_sets = get_available_feature_sets(session, ticker, model)
-                if not feature_sets:
-                    st.error(f"No feature sets found for ticker {ticker} and model {model}")
-                    return
-                
-                feature_set = st.selectbox("Select Feature Set:", feature_sets)
+                # Hardcode model and feature set
+                model = "MLPv2"
+                feature_set = "processed technical indicators (20 days)"
                 
                 st.header("Analysis Settings")
                 window_size = st.slider(
@@ -417,13 +405,18 @@ def main():
                 st.markdown("🟢 Up (0): Actual uptrend")
                 st.markdown("⚫ Side (1): Actual sideways movement")
                 st.markdown("🔴 Down (2): Actual downtrend")
+                
+                # Display the fixed model and feature set
+                # st.header("Model Information")
+                # st.info(f"Using model: {model}")
+                # st.info(f"Feature set: {feature_set}")
             
             # Load data
             with st.spinner("Loading prediction data..."):
                 prediction_data = get_classifier_results(session, ticker, model, feature_set)
                 
                 if prediction_data.empty:
-                    st.error("No prediction data found for the selected parameters.")
+                    st.error(f"No prediction data found for ticker {ticker} with model {model} and feature set {feature_set}.")
                     return
             
             # Calculate returns using actual labels
