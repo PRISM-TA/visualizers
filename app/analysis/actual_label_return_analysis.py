@@ -11,8 +11,10 @@ import math
 from typing import Dict, List, Tuple, Any
 import sys
 from datetime import datetime
+import io
+from plotly.io import write_image
 
-# Add parent directory to path for importing models
+# Add the parent directory to the system path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Import necessary modules
@@ -202,7 +204,7 @@ def calculate_actual_label_returns(prediction_data: pd.DataFrame, window_size: i
     
     return results
 
-def plot_combined_returns_distribution(returns_results: Dict) -> go.Figure:
+def plot_combined_returns_distribution(returns_results: Dict, ticker: str) -> go.Figure:
     """Create a combined KDE plot of returns for all trend types using line curves."""
     # Create figure
     fig = go.Figure()
@@ -257,7 +259,7 @@ def plot_combined_returns_distribution(returns_results: Dict) -> go.Figure:
                 arrowcolor=colors[label],
                 ax=0,
                 ay=30,
-                font=dict(color="#000000", size=11),
+                font=dict(color="#000000", size=16),  # Increased font size for annotations
                 align="center",
                 bgcolor="rgba(255, 255, 255, 0.9)",
                 bordercolor=colors[label],
@@ -272,13 +274,13 @@ def plot_combined_returns_distribution(returns_results: Dict) -> go.Figure:
     
     # Update layout
     fig.update_layout(
-        title="Return Distribution by Trend Type",
+        title=f"Return Distribution by Trend Type for {ticker}",
         xaxis_title="Return",
         yaxis_title="Density",
         legend_title="Trend Type",
         xaxis_tickformat='.1%',
         hovermode="x unified",
-        margin=dict(t=120, r=50, b=50, l=50),  # Extra top margin for annotations
+        margin=dict(t=150, r=50, b=50, l=50, pad=10),  # Increased top margin and padding
         legend=dict(
             yanchor="top",
             y=0.99,
@@ -287,12 +289,13 @@ def plot_combined_returns_distribution(returns_results: Dict) -> go.Figure:
             bgcolor="rgba(255, 255, 255, 0.8)",
             bordercolor="rgba(0, 0, 0, 0.3)",
             borderwidth=1
-        )
+        ),
+        font=dict(size=18),  # Increased font size
     )
     
     return fig
 
-def plot_returns_histogram(returns_data: pd.DataFrame, label: int, label_name: str) -> go.Figure:
+def plot_returns_histogram(returns_data: pd.DataFrame, label: int, label_name: str, ticker: str) -> go.Figure:
     """Create a histogram of returns for a given actual label."""
     # Choose color based on label
     color = 'green' if label == 0 else 'gray' if label == 1 else 'red'
@@ -329,16 +332,18 @@ def plot_returns_histogram(returns_data: pd.DataFrame, label: int, label_name: s
     
     # Update layout
     fig.update_layout(
-        title=f"Distribution of Returns for '{label_name}' Trends",
+        title=f"Distribution of Returns for '{label_name}' Trends ({ticker})",
         xaxis_title="Return",
         yaxis_title="Count",
         showlegend=False,
-        xaxis_tickformat='.1%'
+        xaxis_tickformat='.1%',
+        margin=dict(t=120, r=50, b=50, l=50, pad=10),  # Increased margins
+        font=dict(size=16),  # Increased font size
     )
     
     return fig
 
-def plot_returns_over_time(returns_data: pd.DataFrame, label: int, label_name: str) -> go.Figure:
+def plot_returns_over_time(returns_data: pd.DataFrame, label: int, label_name: str, ticker: str) -> go.Figure:
     """Create a line chart of returns over time for a given actual label."""
     # Sort data by date
     data = returns_data.sort_values('date')
@@ -359,21 +364,23 @@ def plot_returns_over_time(returns_data: pd.DataFrame, label: int, label_name: s
         name="Returns"
     ))
     
-    # Add horizontal line at zero
+    # Add horizontal line at zero return
     fig.add_hline(y=0, line_dash="dash", line_color="black")
     
     # Update layout
     fig.update_layout(
-        title=f"Returns Over Time for '{label_name}' Trends",
+        title=f"Returns Over Time for '{label_name}' Trends ({ticker})",
         xaxis_title="Date",
         yaxis_title="Return",
         showlegend=False,
-        yaxis_tickformat='.1%'
+        yaxis_tickformat='.1%',
+        margin=dict(t=120, r=50, b=50, l=50, pad=10),  # Increased margins
+        font=dict(size=16),  # Increased font size
     )
     
     return fig
 
-def plot_returns_vs_probability(returns_data: pd.DataFrame, label: int, label_name: str) -> go.Figure:
+def plot_returns_vs_probability(returns_data: pd.DataFrame, label: int, label_name: str, ticker: str) -> go.Figure:
     """Create a scatter plot of returns vs. prediction probability."""
     # Choose probability column based on label
     prob_column = 'prob_up' if label == 0 else 'prob_side' if label == 1 else 'prob_down'
@@ -403,17 +410,19 @@ def plot_returns_vs_probability(returns_data: pd.DataFrame, label: int, label_na
     
     # Update layout
     fig.update_layout(
-        title=f"Returns vs. Prediction Probability for '{label_name}' Trends",
+        title=f"Returns vs. Prediction Probability for '{label_name}' Trends ({ticker})",
         xaxis_title=f"{label_name} Probability",
         yaxis_title="Return",
         showlegend=False,
         yaxis_tickformat='.1%',
-        xaxis_range=[0, 1]
+        xaxis_range=[0, 1],
+        margin=dict(t=120, r=50, b=50, l=50, pad=10),  # Increased margins
+        font=dict(size=16),  # Increased font size
     )
     
     return fig
 
-def plot_cumulative_returns(returns_data: pd.DataFrame, label: int, label_name: str) -> go.Figure:
+def plot_cumulative_returns(returns_data: pd.DataFrame, label: int, label_name: str, ticker: str) -> go.Figure:
     """Create a chart showing cumulative returns if following trends of this type."""
     # Sort by date
     sorted_data = returns_data.sort_values('date').copy()
@@ -441,14 +450,41 @@ def plot_cumulative_returns(returns_data: pd.DataFrame, label: int, label_name: 
     
     # Update layout
     fig.update_layout(
-        title=f"Cumulative Returns Following '{label_name}' Trends",
+        title=f"Cumulative Returns Following '{label_name}' Trends ({ticker})",
         xaxis_title="Date",
         yaxis_title="Cumulative Return",
         showlegend=False,
-        yaxis_tickformat='.1%'
+        yaxis_tickformat='.1%',
+        margin=dict(t=120, r=50, b=50, l=50, pad=10),  # Increased margins
+        font=dict(size=16),  # Increased font size
     )
     
     return fig
+
+def download_plot_as_image(fig: go.Figure, filename: str) -> None:
+    """
+    Provide a download button for a Plotly chart as an image in Streamlit.
+
+    Parameters:
+    - fig: Plotly Figure object to export.
+    - filename: Name of the file to download (e.g., 'chart.png').
+    """
+    # Create a BytesIO buffer to store the image
+    buffer = io.BytesIO()
+    
+    # Write the figure to the buffer as a PNG image
+    write_image(fig, buffer, format="png", width=1200, height=800)
+    
+    # Reset the buffer's position to the beginning
+    buffer.seek(0)
+    
+    # Provide a download button in Streamlit
+    st.download_button(
+        label=f"Download {filename}",
+        data=buffer,
+        file_name=filename,
+        mime="image/png"
+    )
 
 def main():
     try:
@@ -544,8 +580,9 @@ def main():
                 
                 # Add combined distribution chart
                 st.header("Combined Return Distribution")
-                combined_fig = plot_combined_returns_distribution(returns_results)
+                combined_fig = plot_combined_returns_distribution(returns_results, ticker)
                 st.plotly_chart(combined_fig, use_container_width=True)
+                download_plot_as_image(combined_fig, f"{ticker}_combined_distribution.png")
             
             # Detailed analysis by prediction type
             st.header("Detailed Analysis by Trend Type")
@@ -578,24 +615,28 @@ def main():
                         
                         # Create visualizations
                         st.subheader("Return Distribution")
-                        hist_fig = plot_returns_histogram(returns_df, label, label_names[label])
+                        hist_fig = plot_returns_histogram(returns_df, label, label_names[label], ticker)
                         st.plotly_chart(hist_fig, use_container_width=True)
+                        download_plot_as_image(hist_fig, f"{ticker}_{label_names[label]}_distribution.png")
                         
                         col1, col2 = st.columns(2)
                         
                         with col1:
                             st.subheader("Returns Over Time")
-                            time_fig = plot_returns_over_time(returns_df, label, label_names[label])
+                            time_fig = plot_returns_over_time(returns_df, label, label_names[label], ticker)
                             st.plotly_chart(time_fig, use_container_width=True)
+                            download_plot_as_image(time_fig, f"{ticker}_{label_names[label]}_returns_over_time.png")
                         
                         with col2:
                             st.subheader("Cumulative Returns")
-                            cum_fig = plot_cumulative_returns(returns_df, label, label_names[label])
+                            cum_fig = plot_cumulative_returns(returns_df, label, label_names[label], ticker)
                             st.plotly_chart(cum_fig, use_container_width=True)
+                            download_plot_as_image(cum_fig, f"{ticker}_{label_names[label]}_cumulative_returns.png")
                         
                         st.subheader("Returns vs. Prediction Probability")
-                        prob_fig = plot_returns_vs_probability(returns_df, label, label_names[label])
+                        prob_fig = plot_returns_vs_probability(returns_df, label, label_names[label], ticker)
                         st.plotly_chart(prob_fig, use_container_width=True)
+                        download_plot_as_image(prob_fig, f"{ticker}_{label_names[label]}_returns_vs_probability.png")
                         
                         # Show raw data
                         with st.expander("View Raw Data"):
