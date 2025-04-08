@@ -30,6 +30,9 @@ def plot_multiple_stocks(stock_files, output_filepath):
             ax.plot(df['date'], df['benchmark_cum_return_pct'], 'b-', label='Benchmark', linewidth=1)
             ax.plot(df['date'], df['target_cum_return_pct'], 'orange', label='Target', linewidth=1)
             
+            # Add a black solid line at y=0
+            ax.axhline(y=0, color='black', linestyle='-', linewidth=0.8)
+            
             # Set y-axis to log scale with smaller linthresh to compress the middle region
             ax.set_yscale('symlog', linthresh=90)
             
