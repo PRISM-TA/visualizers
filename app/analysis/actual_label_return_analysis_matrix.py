@@ -1,5 +1,3 @@
-# actual_labels_return_plot.py
-
 import os
 import pandas as pd
 import numpy as np
@@ -124,7 +122,7 @@ def calculate_actual_label_returns(prediction_data: pd.DataFrame, window_size: i
     # Ensure date column is a datetime
     prediction_data['date'] = pd.to_datetime(prediction_data['date'])
     
-    # Calculate returns for each prediction
+    # Calculate returns for each actual label
     for i in range(len(prediction_data) - window_size):
         current_price = prediction_data['close'].iloc[i]
         future_price = prediction_data['close'].iloc[i + window_size]
@@ -135,14 +133,14 @@ def calculate_actual_label_returns(prediction_data: pd.DataFrame, window_size: i
         # Get the actual label for this point
         label = prediction_data['actual_label'].iloc[i]
         
-        # Store the return with its corresponding label
+        # Store the return with its corresponding actual label
         if label in returns_by_label:
             returns_by_label[label].append({
                 'date': prediction_data['date'].iloc[i],
                 'current_price': current_price,
                 'future_price': future_price,
                 'return': returns,
-                'prediction': label,
+                'actual_label': label,  # Ensure we are using actual_label
                 'prob_up': prediction_data['prob_up'].iloc[i],
                 'prob_side': prediction_data['prob_side'].iloc[i],
                 'prob_down': prediction_data['prob_down'].iloc[i]
@@ -154,7 +152,7 @@ def calculate_actual_label_returns(prediction_data: pd.DataFrame, window_size: i
         if returns_by_label[label]:
             dfs_by_label[label] = pd.DataFrame(returns_by_label[label])
     
-    # Calculate statistics for each label
+    # Calculate statistics for each actual label
     results = {}
     for label in dfs_by_label:
         df = dfs_by_label[label]
@@ -172,7 +170,7 @@ def calculate_actual_label_returns(prediction_data: pd.DataFrame, window_size: i
     return results
 
 def plot_combined_returns_distribution(returns_results: Dict, ticker: str) -> go.Figure:
-    """Create a combined KDE plot of returns for all trend types using line curves."""
+    """Create a combined KDE plot of returns for all trend types using actual labels."""
     # Create figure
     fig = go.Figure()
     
@@ -197,10 +195,10 @@ def plot_combined_returns_distribution(returns_results: Dict, ticker: str) -> go
     else:
         x_min, x_max = -0.5, 0.5  # Default range if no data
     
-    # Add distribution for each label type
+    # Add distribution for each actual label type
     for label in sorted(returns_results.keys()):
         if label in returns_results and returns_results[label]['count'] > 0:
-            # Get data for this label
+            # Get data for this actual label
             returns_df = returns_results[label]['data']
             count = returns_results[label]['count']
             
