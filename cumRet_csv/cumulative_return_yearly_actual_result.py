@@ -25,7 +25,7 @@ def plot_multiple_stocks(stock_files, output_filepath):
             
             # Plot data
             ax.plot(df['date'], df['benchmark_cum_return_pct'], 'b-', label='Benchmark', linewidth=1)
-            ax.plot(df['date'], df['target_cum_return_pct'], 'orange', label='Target', linewidth=1)
+            ax.plot(df['date'], df['target_cum_return_pct'], 'green', label='Target', linewidth=1)
             
             # Add a black solid line at y=0
             ax.axhline(y=0, color='black', linestyle='-', linewidth=0.8)
@@ -69,4 +69,4 @@ if len(stock_files) == 0:
     print("No CSV files found in the specified directory!")
 else:
     print(f"Found {len(stock_files)} CSV files")
-    plot_multiple_stocks(stock_files, 'multiple_stocks_cumulative_return_actual.png')
+    plot_multiple_stocks(stock_files, 'multiple_stocks_cumulative_return_actual_result.png')
