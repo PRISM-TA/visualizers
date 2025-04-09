@@ -398,9 +398,12 @@ def generate_combined_matrix_plot(model: str, feature_set: str, window_size: int
                 return
             
             # Create a subplot figure with 7 rows and 4 columns
+            rows_count = 7
+            cols_count = 4
+            
             fig = make_subplots(
-                rows=7, 
-                cols=4, 
+                rows=rows_count, 
+                cols=cols_count, 
                 subplot_titles=tickers, 
                 vertical_spacing=0.05,  # Reduced vertical spacing
                 horizontal_spacing=0.05  # Reduced horizontal spacing
@@ -427,10 +430,12 @@ def generate_combined_matrix_plot(model: str, feature_set: str, window_size: int
                 # Generate the combined return distribution plot for the ticker
                 ticker_fig = plot_combined_returns_distribution(returns_results, ticker)
                 
+                # Calculate the row and column for this subplot
+                row = (idx // cols_count) + 1
+                col = (idx % cols_count) + 1
+                
                 # Extract the data from the ticker's figure and add it to the subplot
                 for trace in ticker_fig.data:
-                    row = (idx // 4) + 1
-                    col = (idx % 4) + 1
                     fig.add_trace(trace, row=row, col=col)
                 
                 # Determine the range for x-axis
@@ -446,11 +451,79 @@ def generate_combined_matrix_plot(model: str, feature_set: str, window_size: int
                     x_min = min_return - range_padding
                     x_max = max_return + range_padding
                     
-                    # Add vertical and horizontal lines at zero
-                    row = (idx // 4) + 1
-                    col = (idx % 4) + 1
+                    # Add vertical line at zero
                     fig.add_vline(x=0, line_dash="solid", line_color="black", line_width=1, row=row, col=col)
-                    fig.add_hline(y=0, line_dash="solid", line_color="black", line_width=1, row=row, col=col)
+                    
+                    # Add vertical lines for the mean of each trend return
+                    label_names = {0: "Uptrend", 1: "Sideways", 2: "Downtrend"}
+                    colors = {0: "rgba(0, 128, 0, 0.8)", 1: "rgba(128, 128, 128, 0.8)", 2: "rgba(255, 0, 0, 0.8)"}
+                    
+                    # Add mean lines for each trend type
+                    for label in sorted(returns_results.keys()):
+                        if label in returns_results and returns_results[label]['count'] > 0:
+                            mean_return = returns_results[label]['mean']
+                            
+                            # Add vertical line for the mean
+                            fig.add_vline(
+                                x=mean_return,
+                                line_dash="dash",
+                                line_color=colors[label],
+                                line_width=2,
+                                row=row,
+                                col=col
+                            )
+                    
+                    # Use the subplot axes directly for annotations
+                    # This ensures correct positioning in each subplot
+                    if row == 1 and col == 1:
+                        xref = "x"
+                        yref = "y"
+                    else:
+                        subplot_idx = (row - 1) * cols_count + col
+                        xref = f"x{subplot_idx}"
+                        yref = f"y{subplot_idx}"
+                    
+                    # Set the annotation positions as a fraction of the max data value
+                    # Get the max y value from the data for this subplot
+                    max_y_values = []
+                    for label in returns_results:
+                        if label in returns_results and returns_results[label]['count'] > 0:
+                            hist, bin_edges = np.histogram(returns_results[label]['data']['return'], bins=50, density=True)
+                            max_y_values.append(max(hist))
+                    
+                    if max_y_values:
+                        max_y = max(max_y_values)
+                        # Position the labels at the top using data coordinates
+                        y_positions = {
+                            0: max_y * 1.02, # Uptrend at 98% of max height
+                            1: max_y * 0.9,# Sideways at 85% of max height
+                            2: max_y * 0.78 # Downtrend at 72% of max height
+                        }
+                        
+                        for label in sorted(returns_results.keys()):
+                            if label in returns_results and returns_results[label]['count'] > 0:
+                                mean_return = returns_results[label]['mean']
+                                
+                                # Add annotation using data coordinates
+                                fig.add_annotation(
+                                    x=x_max - range_padding * 0.2,  # Position near right edge
+                                    y=y_positions[label],
+                                    text=f"{label_names[label]}: {mean_return:.1%}",
+                                    showarrow=False,
+                                    font=dict(
+                                        size=10,
+                                        color=colors[label].replace("0.8", "1.0")
+                                    ),
+                                    xref=xref,
+                                    yref=yref,
+                                    align="right",
+                                    xanchor="right",
+                                    yanchor="top",
+                                    bgcolor="rgba(255, 255, 255, 0.8)",
+                                    bordercolor=colors[label],
+                                    borderwidth=1,
+                                    borderpad=3
+                                )
                     
                     # Calculate adaptive tick values
                     range_span = x_max - x_min
